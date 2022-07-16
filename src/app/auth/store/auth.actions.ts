@@ -10,7 +10,7 @@ export class AuthenticateStart implements Action {
 export const AUTHENTICATE_SUCCESS = '[Auth] AUTHENTICATE_SUCCESS';
 export class AuthenticateSuccess implements Action {
   readonly type = AUTHENTICATE_SUCCESS;
-  constructor(public payload: User) {}
+  constructor(public payload: { user: User, redirect: boolean }) {}
 }
 
 export const AUTHENTICATE_FAIL = '[Auth] AUTHENTICATE_FAIL';
