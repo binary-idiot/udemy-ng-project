@@ -4,10 +4,8 @@ import {
   RouterStateSnapshot,
   ActivatedRouteSnapshot
 } from '@angular/router';
-import {Observable, of, take} from 'rxjs';
+import {map, Observable, of, switchMap, take} from 'rxjs';
 import {Recipe} from "./recipe.model";
-import {DataStorageService} from "../shared/data-storage.service";
-import {RecipeService} from "./recipe.service";
 import * as fromApp from "../store/app.reducer";
 import * as RecipeActions from "./store/recipe.actions";
 import {Store} from "@ngrx/store";
@@ -17,16 +15,24 @@ import {Actions, ofType} from "@ngrx/effects";
   providedIn: 'root'
 })
 export class RecipesResolver implements Resolve<Recipe[]> {
-  constructor(private dataStorageService: DataStorageService,
-              private recipesService: RecipeService,
-              private store: Store<fromApp.AppState>,
+  constructor(private store: Store<fromApp.AppState>,
               private actions$: Actions) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Recipe[] | Observable<Recipe[]> {
-    this.store.dispatch(new RecipeActions.FetchRecipes());
-    return this.actions$.pipe(
-      ofType(RecipeActions.SET_RECIPES),
-      take(1)
-    );
+    return this.store.select('recipes').pipe(
+      take(1),
+      map(recipeState => recipeState.recipes),
+      switchMap(recipes => {
+        if (recipes.length == 0) {
+          this.store.dispatch(new RecipeActions.FetchRecipes());
+          return this.actions$.pipe(
+            ofType(RecipeActions.SET_RECIPES),
+            take(1)
+          );
+        } else {
+          return of(recipes);
+        }
+      })
+    )
   }
 }
